@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
@@ -7,7 +8,7 @@ import { ChatInput } from '@/components/ChatInput';
 import { getBotResponse } from '../actions'; // Adjusted path
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
-import { Bot, LogOut, MessageSquareDashed } from 'lucide-react';
+import { Bot, LogOut, MessageSquareDashed, Loader2 } from 'lucide-react';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { isAuthenticated, logout } from '@/lib/auth';
 import { Button } from '@/components/ui/button';
