@@ -5,7 +5,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { ChatMessage, type Message } from '@/components/ChatMessage';
 import { ChatInput } from '@/components/ChatInput';
-import { getBotResponse } from '../actions'; // Adjusted path
+import { getBotResponse } from '../actions'; 
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
 import { Bot, LogOut, MessageSquareDashed, Loader2 } from 'lucide-react';
@@ -46,6 +46,9 @@ export default function ChatPage() {
 
   const handleSendMessage = async (userInput: string) => {
     if (!authChecked) return;
+    
+    const historyForAI = [...messages]; // Snapshot of messages *before* adding the new user message
+
     const newUserMessage: Message = {
       id: crypto.randomUUID(),
       text: userInput,
@@ -55,7 +58,7 @@ export default function ChatPage() {
     setMessages((prevMessages) => [...prevMessages, newUserMessage]);
     setIsLoading(true);
 
-    const result = await getBotResponse(userInput);
+    const result = await getBotResponse(userInput, historyForAI);
 
     if (result.error || !result.response) {
       toast({
@@ -83,7 +86,7 @@ export default function ChatPage() {
     setTimeout(() => {
       setMessages((prevMessages) => [...prevMessages, newBotMessage]);
       setIsLoading(false);
-    }, 500);
+    }, 500); // Small delay to make bot response feel more natural
   };
 
   const handleLogout = () => {
