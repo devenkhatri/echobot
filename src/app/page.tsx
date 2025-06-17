@@ -7,6 +7,7 @@ import { getBotResponse } from './actions';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
 import { Bot, MessageSquareDashed } from 'lucide-react'; // Added MessageSquareDashed
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 
 export default function EchoBotPage() {
   const [messages, setMessages] = useState<Message[]>([]);
