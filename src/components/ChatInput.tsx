@@ -23,71 +23,77 @@ export function ChatInput({ onSendMessage, isLoading }: ChatInputProps) {
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const { toast } = useToast();
 
+  const isRecordingRef = useRef(isRecording);
+  useEffect(() => {
+    isRecordingRef.current = isRecording;
+  }, [isRecording]);
+
   useEffect(() => {
     const SpeechRecognitionAPI = window.SpeechRecognition || (window as any).webkitSpeechRecognition;
-    if (SpeechRecognitionAPI) {
-      recognitionRef.current = new SpeechRecognitionAPI();
-      recognitionRef.current.continuous = false;
-      recognitionRef.current.interimResults = false;
-      recognitionRef.current.lang = language === 'gu' ? 'gu-IN' : 'en-US';
-
-      recognitionRef.current.onresult = (event) => {
-        const transcript = event.results[0][0].transcript;
-        setInputValue(transcript);
-        setIsRecording(false); 
-      };
-
-      recognitionRef.current.onerror = (event) => {
-        console.error('Speech recognition error:', event.error);
-        let errorMessageKey = 'chatInput.voiceInput.toast.errorTitle'; // Default generic error
-        if (event.error === 'no-speech') {
-          errorMessageKey = 'chatInput.voiceInput.toast.noSpeechDesc';
-        } else if (event.error === 'audio-capture') {
-          errorMessageKey = 'chatInput.voiceInput.toast.micProblemDesc';
-        } else if (event.error === 'not-allowed') {
-          errorMessageKey = 'chatInput.voiceInput.toast.permissionDeniedDesc';
-        }
-        toast({ 
-            variant: 'destructive', 
-            title: t('chatInput.voiceInput.toast.errorTitle'), 
-            description: t(errorMessageKey) 
-        });
-        setIsRecording(false);
-      };
-
-      recognitionRef.current.onend = () => {
-        if (isRecording) {
-          setIsRecording(false);
-        }
-      };
-      setSpeechApiSupported(true);
-    } else {
+    if (!SpeechRecognitionAPI) {
       setSpeechApiSupported(false);
       console.warn("Speech recognition not supported by this browser.");
+      return;
     }
+    
+    setSpeechApiSupported(true);
+    recognitionRef.current = new SpeechRecognitionAPI();
+    const recognition = recognitionRef.current;
 
-    const currentRecognition = recognitionRef.current;
+    recognition.continuous = false;
+    recognition.interimResults = false;
+    recognition.lang = language === 'gu' ? 'gu-IN' : 'en-US';
+
+    recognition.onresult = (event) => {
+      const transcript = event.results[0][0].transcript;
+      setInputValue(transcript);
+    };
+
+    recognition.onerror = (event) => {
+      console.error('Speech recognition error:', event.error);
+      let errorMessageKey = 'chatInput.voiceInput.toast.errorTitle';
+      if (event.error === 'no-speech') {
+        errorMessageKey = 'chatInput.voiceInput.toast.noSpeechDesc';
+      } else if (event.error === 'audio-capture') {
+        errorMessageKey = 'chatInput.voiceInput.toast.micProblemDesc';
+      } else if (event.error === 'not-allowed') {
+        errorMessageKey = 'chatInput.voiceInput.toast.permissionDeniedDesc';
+      }
+      toast({ 
+          variant: 'destructive', 
+          title: t('chatInput.voiceInput.toast.errorTitle'), 
+          description: t(errorMessageKey) 
+      });
+      setIsRecording(false);
+    };
+
+    recognition.onend = () => {
+      setIsRecording(false);
+    };
+    
+    recognition.onstart = () => {
+      // setIsRecording(true) is handled in handleVoiceInputClick to provide immediate UI feedback
+    };
+
     return () => {
-      if (currentRecognition) {
-        currentRecognition.onresult = null;
-        currentRecognition.onerror = null;
-        currentRecognition.onend = null;
-        currentRecognition.onstart = null;
-        currentRecognition.stop(); 
+      if (recognition) {
+        recognition.onresult = null;
+        recognition.onerror = null;
+        recognition.onend = null;
+        recognition.onstart = null;
+        if (isRecordingRef.current) { 
+            try {
+                recognition.stop();
+            } catch (e) {
+                console.warn("Error stopping recognition on cleanup:", e);
+            }
+        }
       }
     };
-  }, [toast, language, t, isRecording]); // Added isRecording to deps to ensure onend logic is correct
-
-  // Update lang if language context changes
-  useEffect(() => {
-    if (recognitionRef.current) {
-      recognitionRef.current.lang = language === 'gu' ? 'gu-IN' : 'en-US';
-    }
-  }, [language]);
-
+  }, [language, t, toast]);
 
   const handleVoiceInputClick = () => {
-    if (!recognitionRef.current || !speechApiSupported) {
+    if (!speechApiSupported) {
       toast({ 
           variant: 'destructive', 
           title: t('chatInput.voiceInput.toast.errorTitle'), 
@@ -95,10 +101,22 @@ export function ChatInput({ onSendMessage, isLoading }: ChatInputProps) {
       });
       return;
     }
+    if (!recognitionRef.current) {
+        toast({
+            variant: 'destructive',
+            title: t('chatInput.voiceInput.toast.errorTitle'),
+            description: "Speech recognition service not ready. Please try again."
+        });
+        return;
+    }
 
     if (isRecording) {
-      recognitionRef.current.stop();
-      setIsRecording(false);
+      try {
+        recognitionRef.current.stop();
+      } catch(e) {
+        console.warn("Error explicitly stopping recognition:", e);
+        setIsRecording(false); 
+      }
     } else {
       setInputValue(''); 
       try {
@@ -119,7 +137,7 @@ export function ChatInput({ onSendMessage, isLoading }: ChatInputProps) {
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     const trimmedValue = inputValue.trim();
-    if (!trimmedValue || isLoading) return;
+    if (!trimmedValue || isLoading || isRecording) return;
     
     setInputValue(''); 
     await onSendMessage(trimmedValue);
@@ -138,7 +156,7 @@ export function ChatInput({ onSendMessage, isLoading }: ChatInputProps) {
         placeholder={t('chatInput.placeholder')}
         className="flex-1 rounded-full h-11 px-5 text-sm focus-visible:ring-1 focus-visible:ring-accent focus-visible:ring-offset-0 border-border shadow-sm"
         aria-label={t('chatInput.placeholder')}
-        disabled={isLoading}
+        disabled={isLoading || isRecording}
         autoFocus
       />
       <TooltipProvider delayDuration={300}>
@@ -170,7 +188,7 @@ export function ChatInput({ onSendMessage, isLoading }: ChatInputProps) {
         size="icon"
         className="rounded-full h-11 w-11 shrink-0 bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm"
         aria-label={t('chatInput.sendMessageButtonLabel')}
-        disabled={isLoading || !inputValue.trim()}
+        disabled={isLoading || !inputValue.trim() || isRecording}
       >
         {isLoading ? (
           <Loader2 className="h-5 w-5 animate-spin" />
