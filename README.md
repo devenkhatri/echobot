@@ -1,22 +1,24 @@
 
 # EchoBot - Conversational AI Chat Application
 
-EchoBot is a modern, full-stack web application built with Next.js, React, and Genkit, showcasing a conversational AI chat interface with user authentication.
+EchoBot is a modern, full-stack web application built with Next.js, React, and Genkit, showcasing a conversational AI chat interface with user authentication, voice input, and multi-language support.
 
 ## Overview
 
-This application provides a sleek and responsive chat experience where users can log in to interact with EchoBot, an AI assistant. EchoBot is designed to remember the context of the conversation, allowing for natural and engaging follow-up interactions. Bot responses are rendered with proper Markdown formatting, supporting elements like lists, code blocks, and links.
+This application provides a sleek and responsive chat experience where users can log in to interact with EchoBot, an AI assistant. EchoBot is designed to remember the context of the conversation, allowing for natural and engaging follow-up interactions. Users can type messages or use voice input. The interface and bot responses can be switched between English and Gujarati. Bot responses are rendered with proper Markdown formatting, supporting elements like lists, code blocks, and links.
 
 ## Features
 
-*   **Conversational AI Chat**: Powered by Genkit and a Google AI model, EchoBot can engage in multi-turn conversations, remembering previous messages.
+*   **Conversational AI Chat**: Powered by Genkit and a Google AI model (e.g., Gemini), EchoBot can engage in multi-turn conversations, remembering previous messages.
 *   **User Authentication**: A simple login page protects the chat interface. Authentication state is managed client-side using `localStorage` (mock authentication, any non-empty username/password works).
+*   **Voice Input**: Users can provide their chat messages using their voice, leveraging the browser's Web Speech API for transcription.
+*   **Language Selection (English/Gujarati)**: The entire application interface, including bot responses and voice input language, can be switched between English and Gujarati.
 *   **Markdown Support**: Bot responses are rendered with full Markdown support, including code blocks, lists, links, and other formatting.
 *   **Responsive Design**: The application is built with Tailwind CSS and ShadCN UI components, ensuring a great user experience across various screen sizes.
 *   **Modern Tech Stack**: Utilizes Next.js 15 (App Router), React, TypeScript, and Genkit for cutting-edge performance and developer experience.
-*   **Toast Notifications**: User-friendly toast notifications for actions like login, logout, and errors.
+*   **Toast Notifications**: User-friendly toast notifications for actions like login, logout, errors, and voice input status.
 *   **Protected Routes**: The chat interface is only accessible after successful login.
-*   **Loading States**: Clear visual indicators for when the bot is "thinking" or when authentication is being checked.
+*   **Loading States**: Clear visual indicators for when the bot is "thinking", authentication is being checked, or translations are loading.
 
 ## Tech Stack
 
@@ -28,9 +30,13 @@ This application provides a sleek and responsive chat experience where users can
     *   ShadCN UI (for UI components)
     *   Lucide React (for icons)
     *   `react-markdown` (for rendering bot responses)
+    *   Web Speech API (for voice input)
 *   **AI / Backend Logic**:
     *   Genkit (for orchestrating AI flows)
     *   Google AI (e.g., Gemini, via `@genkit-ai/googleai`) - for powering the chat model
+*   **Internationalization (i18n)**:
+    *   React Context API for language management
+    *   JSON-based translation files
 *   **Development**:
     *   Node.js
     *   npm (or yarn/pnpm)
@@ -69,8 +75,6 @@ Create a `.env` file in the root of your project and add your API key:
 ```env
 # .env
 GOOGLE_API_KEY=YOUR_GOOGLE_AI_API_KEY
-# or if specifically using Gemini:
-# GEMINI_API_KEY=YOUR_GEMINI_API_KEY
 ```
 Replace `YOUR_GOOGLE_AI_API_KEY` with your actual API key from Google AI Studio.
 
@@ -139,10 +143,17 @@ Ensure your production environment has the necessary environment variables (like
 *   `src/components/`: Reusable React components.
     *   `src/components/ui/`: ShadCN UI components.
     *   `src/components/ChatMessage.tsx`: Component for displaying individual chat messages.
-    *   `src/components/ChatInput.tsx`: Component for user input.
+    *   `src/components/ChatInput.tsx`: Component for user input (text and voice).
+*   `src/contexts/`: React Context providers.
+    *   `src/contexts/LanguageContext.tsx`: Manages language state and provides translations.
+*   `src/hooks/`: Custom React Hooks.
+    *   `src/hooks/use-toast.ts`: Custom toast hook.
 *   `src/lib/`: Utility functions and libraries.
     *   `src/lib/auth.ts`: Client-side authentication helper.
     *   `src/lib/utils.ts`: General utility functions (like `cn` for classnames).
+*   `src/locales/`: Translation files for internationalization.
+    *   `src/locales/en.json`: English translations.
+    *   `src/locales/gu.json`: Gujarati translations.
 *   `public/`: Static assets.
 *   `package.json`: Project dependencies and scripts.
 *   `tailwind.config.ts`: Tailwind CSS configuration.
@@ -158,3 +169,6 @@ Ensure your production environment has the necessary environment variables (like
     ```bash
     npm run typecheck
     ```
+
+---
+_This README was generated with assistance from an AI._
